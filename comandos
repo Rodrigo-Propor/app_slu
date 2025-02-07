@@ -1,0 +1,80 @@
+source /var/www/saas/venv/bin/activate
+python manage.py runserver
+
+sudo systemctl restart gunicorn
+sudo systemctl restart nginx
+
+
+sudo systemctl stop gunicorn
+sudo systemctl stop nginx
+
+
+bash iniciar_atualizar.sh
+
+
+python manage.py makemigrations
+python manage.py migrate
+
+python manage.py collectstatic
+
+sudo systemctl status nginx
+sudo systemctl status gunicorn
+
+
+git add .
+git commit -m "Alteração da página do usuário"
+
+git branch
+
+git branch teste1
+
+
+
+
+pip install -r requirements.txt
+pip freeze > requirements.txt
+
+git checkout teste1
+git checkout -b teste2
+
+git merge teste2
+
+para modificações
+git commit -a -m "texto da modificação" ou git add
+
+Entrar no banco de dados: sqlite3 db.sqlite
+Shell do Django: python manage.py dbshell
+
+python manage.py converterxls
+
+
+http://127.0.0.1:8000/vistoria/listar_fotos/
+
+deactivate 
+
+sudo du -ah / | sort -rh | head -n 20
+
+df -h
+
+
+rsync -avz --exclude '.git' 'media' /var/www/saas/ root@85.209.93.171:/var/www/saas
+
+rsync -avz --exclude '.git' --exclude 'static' --exclude 'media' /caminho/projeto-local/ usuario@servidor:/caminho/projeto-servidor/
+
+
+ python3.exe -m pip install --upgrade pip
+
+ pip install --upgrade -r requirements.txt
+
+
+pip freeze > requirements.txt
+
+
+Alternativa: Atualizar Pacotes Usando pip-review
+
+pip install pip-review
+
+
+pip-review --auto
+
+python.exe -m pip install --upgrade pip

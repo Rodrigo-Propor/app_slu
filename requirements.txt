@@ -1,0 +1,59 @@
+# /var/www/streamlit/requirements.txt
+
+# Framework Principal
+streamlit
+
+# Componentes Extras do Streamlit
+streamlit-authenticator
+streamlit-option-menu
+extra-streamlit-components
+streamlit-aggrid
+streamlit-lottie
+
+# Manipulação de Dados
+pandas
+numpy
+
+# Banco de Dados
+SQLAlchemy
+
+# Segurança e Autenticação
+bcrypt
+PyJWT
+python-dotenv
+
+# Processamento de Logs
+loguru
+
+# Desenvolvimento
+black
+pylint
+pytest
+
+# Utilitários
+python-dateutil
+pytz
+pathlib
+tqdm
+
+# Processamento de Arquivos
+openpyxl
+xlrd
+python-docx
+
+# Data Visualization
+plotly
+matplotlib
+seaborn
+
+# Otimização
+cachetools
+
+# Suporte Unicode
+chardet
+
+# Bibliotecas Adicionais para o Gerenciador de DB
+Pillow
+watchdog
+jsonschema
+validators

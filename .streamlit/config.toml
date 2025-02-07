@@ -1,0 +1,20 @@
+[theme]
+# Cor primária para elementos interativos (por exemplo, botões, seleções)
+primaryColor = "57AAB0"
+
+# Cor de fundo da área principal do conteúdo
+backgroundColor = "#000000"
+
+# Cor de fundo secundária, utilizada na barra lateral e em widgets interativos
+secondaryBackgroundColor = "484848"
+
+# Cor do texto principal
+textColor = "#FFFFFF"
+
+# Fonte utilizada no aplicativo
+# Opções válidas: "sans serif", "serif", "monospace"
+font = "sans serif"
+
+# Tema base do qual seu tema personalizado herda propriedades
+# Opções válidas: "light", "dark"
+base = "dark"
