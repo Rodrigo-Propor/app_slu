@@ -57,3 +57,6 @@ Pillow
 watchdog
 jsonschema
 validators
+excel2img
+reportlab
+PyPDF2
