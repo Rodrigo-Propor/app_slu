@@ -1,5 +1,9 @@
 import os
 import pandas as pd
+import streamlit as st
+
+# Título da página
+st.title("Exibição de Dados de Arquivos Excel")
 
 # Diretório onde os arquivos Excel estão localizados
 media_path = 'media/planilhas_SLU'
@@ -18,10 +22,10 @@ def carregar_arquivos_excel():
                 print(f"Erro ao ler o arquivo {arquivo}: {str(e)}")
     return arquivos
 
-# Chamar a função para carregar os arquivos
+# Carregar os arquivos
 arquivos_carregados = carregar_arquivos_excel()
 
-# Exibir os dados carregados
+# Exibir os dados no Streamlit
 for nome_arquivo, df in arquivos_carregados:
-    print(f"Dados do arquivo {nome_arquivo}:")
-    print(df.head())  # Exibe as primeiras linhas do DataFrame
+    st.subheader(f"Dados do arquivo: {nome_arquivo}")  # Subtítulo para o nome do arquivo
+    st.dataframe(df)  # Exibe o DataFrame usando st.dataframe
