@@ -2,6 +2,7 @@ import streamlit as st
 import os
 import pandas as pd
 from datetime import datetime
+import sqlite3
 
 def transform_tipo(tipo):
     tipo = tipo.upper()
@@ -17,6 +18,40 @@ def transform_tipo(tipo):
         if tipo.startswith(prefixo):
             return valor
     return tipo
+
+def init_db():
+    conn = sqlite3.connect('arquivos.db')
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS arquivos
+                 (nome_arquivo TEXT PRIMARY KEY, 
+                  tipo TEXT, 
+                  dia INTEGER, 
+                  mes INTEGER, 
+                  ano INTEGER,
+                  registros INTEGER)''')
+    conn.commit()
+    conn.close()
+
+def verificar_arquivo_existente(nome_arquivo):
+    conn = sqlite3.connect('arquivos.db')
+    c = conn.cursor()
+    c.execute("SELECT * FROM arquivos WHERE nome_arquivo = ?", (nome_arquivo,))
+    resultado = c.fetchone()
+    conn.close()
+    return resultado is not None
+
+def salvar_arquivo_db(dados):
+    conn = sqlite3.connect('arquivos.db')
+    c = conn.cursor()
+    try:
+        c.execute("""INSERT INTO arquivos (nome_arquivo, tipo, dia, mes, ano, registros) 
+                     VALUES (?, ?, ?, ?, ?, ?)""", dados)
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return False
+    finally:
+        conn.close()
 
 st.title("Processamento de Arquivos TXT")
 st.write("### Configure as datas dos arquivos")
@@ -47,6 +82,21 @@ with st.form("dados_arquivos"):
         # Extrai o tipo do arquivo
         tipo = filename.split("_")[0] if "_" in filename else "Desconhecido"
         tipo_formatado = transform_tipo(tipo)
+        
+        # Adicionar select box para confirmar tipo
+        tipos_disponiveis = [
+            "CELULA EMERGENCIAL",
+            "INCLINOMETRO",
+            "LEVANTAMENTO TOPOGRÁFICO",
+            "PAMPULHA",
+            "CELULA DE PESQUISA"
+        ]
+        tipo_confirmado = st.selectbox(
+            "Confirmar tipo de arquivo",
+            tipos_disponiveis,
+            index=tipos_disponiveis.index(tipo_formatado) if tipo_formatado in tipos_disponiveis else 0,
+            key=f"tipo_{filename}"
+        )
         
         # Cria colunas para input de data
         col1, col2, col3 = st.columns(3)
@@ -87,7 +137,7 @@ with st.form("dados_arquivos"):
         # Armazena os dados temporariamente
         data.append({
             "filename": filename,
-            "tipo": tipo_formatado,
+            "tipo": tipo_confirmado,
             "dia": dia,
             "mes": mes,
             "ano": ano,
@@ -101,7 +151,11 @@ with st.form("dados_arquivos"):
 
 # Processa os dados quando o formulário for submetido
 if submitted:
+    # Inicializa o banco de dados
+    init_db()
+    
     processed_data = []
+    saving_status = []
     
     for item in data:
         try:
@@ -110,14 +164,25 @@ if submitted:
                 date_str = f"{item['dia']}/{item['mes']}/{item['ano']}"
                 datetime.strptime(date_str, '%d/%m/%Y')  # Valida a data
                 
-                processed_data.append([
+                dados_arquivo = [
                     item["filename"],
                     item["tipo"],
                     int(item["dia"]),
                     int(item["mes"]),
                     int(item["ano"]),
                     item["registros"]
-                ])
+                ]
+                
+                # Verifica se o arquivo já existe no banco
+                if not verificar_arquivo_existente(item["filename"]):
+                    if salvar_arquivo_db(dados_arquivo):
+                        saving_status.append(f"✅ Arquivo {item['filename']} salvo com sucesso!")
+                    else:
+                        saving_status.append(f"❌ Erro ao salvar {item['filename']}")
+                else:
+                    saving_status.append(f"⚠️ Arquivo {item['filename']} já existe no banco")
+                
+                processed_data.append(dados_arquivo)
             else:
                 st.warning(f"Data incompleta para o arquivo {item['filename']}")
         except ValueError:
@@ -141,5 +206,10 @@ if submitted:
             "text/csv",
             key='download-csv'
         )
+        
+        # Exibe status do salvamento
+        st.write("### Status do Salvamento no Banco de Dados")
+        for status in saving_status:
+            st.write(status)
 
 
