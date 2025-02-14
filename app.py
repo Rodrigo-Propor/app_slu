@@ -53,6 +53,19 @@ def salvar_arquivo_db(dados):
     finally:
         conn.close()
 
+def buscar_arquivos_db():
+    conn = sqlite3.connect('arquivos.db')
+    try:
+        df = pd.read_sql_query("""
+            SELECT nome_arquivo, tipo, dia, mes, ano, registros 
+            FROM arquivos""", conn)
+        return df
+    except Exception as e:
+        st.error(f"Erro ao buscar dados do banco: {str(e)}")
+        return pd.DataFrame()
+    finally:
+        conn.close()
+
 st.title("Processamento de Arquivos TXT")
 st.write("### Configure as datas dos arquivos")
 
@@ -72,11 +85,52 @@ except Exception as e:
     st.error(f"Erro ao ler arquivos: {str(e)}")
     st.stop()
 
+# Inicializa o banco de dados
+init_db()
+
+# Busca arquivos já processados
+df_existentes = buscar_arquivos_db()
+arquivos_processados = df_existentes['nome_arquivo'].tolist() if not df_existentes.empty else []
+
+# Filtra apenas arquivos não processados
+arquivos_para_processar = [f for f in filenames if f not in arquivos_processados]
+
+# Se todos os arquivos já estiverem processados, mostra apenas o DataFrame
+if not arquivos_para_processar:
+    st.success("Todos os arquivos já foram processados!")
+    st.write("### Arquivos Processados")
+    
+    # Renomeia as colunas para exibição
+    df_exibicao = df_existentes.rename(columns={
+        'nome_arquivo': 'Nome do Arquivo',
+        'tipo': 'Tipo de Informação',
+        'dia': 'Dia',
+        'mes': 'Mês',
+        'ano': 'Ano',
+        'registros': 'Número de Registros'
+    })
+    
+    st.dataframe(df_exibicao)
+    
+    # Opção para download
+    csv = df_exibicao.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        "Download CSV",
+        csv,
+        "dados_processados.csv",
+        "text/csv",
+        key='download-csv'
+    )
+    st.stop()
+
+# Se houver arquivos para processar, mostra o formulário apenas para eles
+st.write(f"### {len(arquivos_para_processar)} arquivo(s) para processar")
+
 # Criar um formulário para entrada de dados
 with st.form("dados_arquivos"):
     data = []
     
-    for filename in filenames:
+    for filename in arquivos_para_processar:
         st.write(f"#### Arquivo: {filename}")
         
         # Extrai o tipo do arquivo

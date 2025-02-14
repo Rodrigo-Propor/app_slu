@@ -4,6 +4,7 @@ from datetime import datetime
 from openpyxl import load_workbook
 from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
 from collections import defaultdict
+import streamlit as st
 
 # Configuração do logging
 log_filename = f'excel_processing_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log'
@@ -110,26 +111,33 @@ def apply_format(target_cell, source_cell):
         wrap_text=source_cell.alignment.wrap_text
     )
 
-def process_excel_file(filepath):
+def process_excel_file(filepath, progress_bar=None, status_text=None):
     """
     Processa um arquivo Excel, aplicando formatações nas 50 células vazias após a última linha com dados.
     """
     try:
         workbook = load_workbook(filepath)
-        logging.info(f"Processando arquivo: {filepath}")
+        if status_text:
+            status_text.write(f"Processando arquivo: {filepath}")
         
-        for sheet_name in workbook.sheetnames:
+        total_sheets = len(workbook.sheetnames)
+        for sheet_idx, sheet_name in enumerate(workbook.sheetnames):
             worksheet = workbook[sheet_name]
-            logging.info(f"\nProcessando aba: {sheet_name}")
+            if status_text:
+                status_text.write(f"Processando aba: {sheet_name}")
+            
+            # Atualiza progresso
+            if progress_bar:
+                progress = (sheet_idx / total_sheets)
+                progress_bar.progress(progress)
             
             # Para cada coluna de A até J
             for col_letter in 'ABCDEFGHIJ':
-                # Encontra o formato mais comum
                 template_cell, count, total_formats = find_most_common_format(worksheet, col_letter)
                 
                 if template_cell:
-                    logging.info(f"\nColuna {col_letter}:")
-                    logging.info(f"- Formato mais comum encontrado {count} vezes entre {total_formats} formatos diferentes")
+                    if status_text:
+                        status_text.write(f"Formatando coluna {col_letter}...")
                     
                     # Encontra a última linha com dados
                     last_row = 1
@@ -152,53 +160,90 @@ def process_excel_file(filepath):
                         if current_row > last_row + 100:  # Limite de segurança
                             break
                     
-                    logging.info(f"- {cells_formatted} células formatadas após a linha {last_row}")
+                    if status_text:
+                        status_text.write(f"- {cells_formatted} células formatadas após a linha {last_row}")
                 else:
-                    logging.warning(f"Nenhum formato encontrado para coluna {col_letter}")
+                    if status_text:
+                        status_text.warning(f"Nenhum formato encontrado para coluna {col_letter}")
         
         # Salva o arquivo
         workbook.save(filepath)
-        logging.info(f"\nArquivo salvo com sucesso: {filepath}")
+        if status_text:
+            status_text.success(f"Arquivo salvo com sucesso: {filepath}")
         
     except Exception as e:
-        logging.error(f"Erro ao processar arquivo {filepath}: {str(e)}")
+        if status_text:
+            status_text.error(f"Erro ao processar arquivo {filepath}: {str(e)}")
         raise
 
 def main():
-    """
-    Função principal que processa todos os arquivos Excel no diretório especificado.
-    """
-    directory = 'media/planilhas_SLU'
+    st.title("Formatação de Células em Arquivos Excel")
     
-    try:
+    # Criando tabs para melhor organização
+    tab1, tab2 = st.tabs(["Informações", "Processamento"])
+    
+    with tab1:
+        st.write("""
+        ### Sobre o Processamento
+        Este programa realiza as seguintes operações:
+        1. Analisa arquivos Excel na pasta `media/planilhas_SLU`
+        2. Identifica o formato mais comum nas células das colunas A até J
+        3. Aplica esse formato nas próximas 50 células vazias após a última linha com dados
+        4. Salva as alterações mantendo a formatação original
+        
+        ### Arquivos Processados
+        Os seguintes tipos de arquivos são processados:
+        - Arquivos Excel (.xlsx) encontrados na pasta
+        - Apenas as colunas de A até J são formatadas
+        - São formatadas 50 células vazias após a última linha com dados
+        """)
+    
+    with tab2:
+        directory = 'media/planilhas_SLU'
+        
         # Verifica se o diretório existe
         if not os.path.exists(directory):
-            os.makedirs(directory)
-            logging.info(f"Diretório criado: {directory}")
+            if st.button("Criar diretório"):
+                os.makedirs(directory)
+                st.success(f"Diretório criado: {directory}")
         
-        # Lista todos os arquivos Excel no diretório
+        # Lista arquivos Excel
         excel_files = [f for f in os.listdir(directory) if f.endswith('.xlsx')]
         
         if not excel_files:
-            logging.warning(f"Nenhum arquivo Excel encontrado em {directory}")
-            return
+            st.warning(f"Nenhum arquivo Excel encontrado em {directory}")
+            st.stop()
         
-        # Processa cada arquivo
-        for filename in excel_files:
-            filepath = os.path.join(directory, filename)
-            logging.info(f"\n{'='*50}")
-            logging.info(f"Iniciando processamento do arquivo: {filename}")
-            
-            process_excel_file(filepath)
-            
-            logging.info(f"Concluído processamento do arquivo: {filename}")
-            logging.info('='*50)
+        st.write("### Arquivos Encontrados")
+        for file in excel_files:
+            st.write(f"- {file}")
         
-    except Exception as e:
-        logging.error(f"Erro durante a execução: {str(e)}")
-        raise
+        # Botão para iniciar processamento
+        if st.button("Iniciar Processamento"):
+            if not st.checkbox("Confirmar processamento dos arquivos?"):
+                st.warning("Por favor, confirme para iniciar o processamento")
+                st.stop()
+            
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+            
+            try:
+                # Processa cada arquivo
+                for idx, filename in enumerate(excel_files):
+                    filepath = os.path.join(directory, filename)
+                    status_text.write(f"Processando arquivo {idx+1} de {len(excel_files)}: {filename}")
+                    
+                    process_excel_file(filepath, progress_bar, status_text)
+                    
+                    # Atualiza barra de progresso geral
+                    progress = (idx + 1) / len(excel_files)
+                    progress_bar.progress(progress)
+                
+                st.success("Processamento concluído com sucesso!")
+                
+            except Exception as e:
+                st.error(f"Erro durante o processamento: {str(e)}")
+                logging.error(f"Erro durante a execução: {str(e)}")
 
 if __name__ == "__main__":
-    logging.info("Iniciando processamento de arquivos Excel")
     main()
-    logging.info("Processamento concluído")
