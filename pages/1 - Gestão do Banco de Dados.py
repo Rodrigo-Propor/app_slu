@@ -1,4 +1,3 @@
-
 import streamlit as st
 import sqlite3
 import pandas as pd
@@ -14,9 +13,9 @@ st.set_page_config(
 )
 
 # Função para conectar ao banco de dados
-def create_connection():
+def create_connection(db_file: str):
     try:
-        conn = sqlite3.connect('banco_dados.db')
+        conn = sqlite3.connect(db_file)
         return conn
     except Error as e:
         st.error(f"Erro ao conectar ao banco de dados: {e}")
@@ -62,9 +61,17 @@ def execute_query(conn, query):
         st.error(f"Erro ao executar query: {e}")
         return False
 
-# Sidebar
+# Sidebar - seleção de banco de dados
 st.sidebar.title("🗃️ Gerenciador de BD")
-conn = create_connection()
+
+# Lista os arquivos .db disponíveis na pasta atual
+db_files = [f for f in os.listdir('.') if f.endswith('.db')]
+if not db_files:
+    st.sidebar.error("Nenhum banco de dados encontrado na pasta atual.")
+    conn = None
+else:
+    selected_db = st.sidebar.selectbox("Selecione o banco de dados", db_files)
+    conn = create_connection(selected_db)
 
 if conn is not None:
     tables = get_tables(conn)
@@ -105,13 +112,13 @@ if conn is not None:
                 
                 for i in range(num_columns):
                     with cols[0]:
-                        col_name = st.text_input(f"Nome da coluna {i+1}")
+                        col_name = st.text_input(f"Nome da coluna {i+1}", key=f"nome_{i}")
                     with cols[1]:
                         col_type = st.selectbox(f"Tipo da coluna {i+1}", 
-                                              ["INTEGER", "TEXT", "REAL", "BLOB", "DATE"])
+                                                ["INTEGER", "TEXT", "REAL", "BLOB", "DATE"], key=f"tipo_{i}")
                     with cols[2]:
-                        col_pk = st.checkbox(f"Chave Primária {i+1}")
-                        col_notnull = st.checkbox(f"Not Null {i+1}")
+                        col_pk = st.checkbox(f"Chave Primária {i+1}", key=f"pk_{i}")
+                        col_notnull = st.checkbox(f"Not Null {i+1}", key=f"notnull_{i}")
                     
                     if col_name:
                         column_def = f"{col_name} {col_type}"
@@ -142,7 +149,7 @@ if conn is not None:
                 
                 for i, col in enumerate(columns):
                     with cols[i]:
-                        new_data[col] = st.text_input(f"Novo {col}")
+                        new_data[col] = st.text_input(f"Novo {col}", key=f"novo_{col}")
                 
                 if st.button("Adicionar Registro"):
                     cols_str = ", ".join(columns)
@@ -169,7 +176,7 @@ if conn is not None:
                         execute_query(conn, query)
                     st.success("Alterações salvas com sucesso!")
 
-    elif operation == "❌ Exclu":
+    elif operation == "❌ Excluir Tabela":
         st.title("❌ Excluir Tabela")
         
         with st.expander("Excluir Tabela", expanded=True):
@@ -193,7 +200,7 @@ if conn is not None:
             
             if st.button("Executar Query"):
                 try:
-                    if query.lower().startswith("select"):
+                    if query.lower().strip().startswith("select"):
                         result = pd.read_sql_query(query, conn)
                         st.dataframe(result)
                     else:

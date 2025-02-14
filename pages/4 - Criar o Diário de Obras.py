@@ -1,5 +1,6 @@
 import os
 import re
+import streamlit as st
 from PyPDF2 import PdfMerger, PdfReader, PdfWriter
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import cm
@@ -16,7 +17,7 @@ def get_pdf_files(month: int, year: int) -> list:
     pattern = fr"_{month}_(Ano {year})_"
 
     if not os.path.isdir(directory):
-        print(f"A pasta '{directory}' não foi encontrada.")
+        st.error(f"A pasta '{directory}' não foi encontrada.")
         return []
 
     for filename in os.listdir(directory):
@@ -32,15 +33,15 @@ def merge_pdfs(pdf_files: list, output_path: str):
     merger = PdfMerger()
     input_directory = os.path.join("media")
 
-    print("Iniciando a combinação dos arquivos PDF...")
+    st.info("Iniciando a combinação dos arquivos PDF...")
     for pdf in pdf_files:
         pdf_path = os.path.join(input_directory, pdf)
-        print(f"Adicionando '{pdf}'...")
+        st.write(f"Adicionando '{pdf}'...")
         merger.append(pdf_path)
 
     merger.write(output_path)
     merger.close()
-    print(f"Arquivos PDF combinados com sucesso em '{output_path}'.")
+    st.success(f"Arquivos PDF combinados com sucesso em '{output_path}'.")
 
 def get_image_dimensions(image_path: str, target_height: float):
     """
@@ -64,7 +65,7 @@ def add_image_to_pdf(pdf_path: str, image_path: str):
     reader = PdfReader(pdf_path)
     writer = PdfWriter()
 
-    print("Iniciando a adição da assinatura em cada página...")
+    st.info("Iniciando a adição da assinatura em cada página...")
     for page_num, page in enumerate(reader.pages):
         # Obtém as dimensões da página
         page_width = float(page.mediabox.width)
@@ -85,9 +86,9 @@ def add_image_to_pdf(pdf_path: str, image_path: str):
             y_position,
             width=target_width,
             height=target_height,
-            mask='auto',  # Isso preserva a transparência
+            mask='auto',  # Preserva a transparência
             preserveAspectRatio=True,
-            anchor='sw'  # southwest = inferior esquerdo
+            anchor='sw'   # inferior esquerdo
         )
 
         can.save()
@@ -98,49 +99,49 @@ def add_image_to_pdf(pdf_path: str, image_path: str):
         page.merge_page(overlay.pages[0])
         writer.add_page(page)
 
-        print(f"Assinatura adicionada na página {page_num + 1}.")
+        st.write(f"Assinatura adicionada na página {page_num + 1}.")
 
-    # Salva o PDF final
     with open(pdf_path, "wb") as output_pdf:
         writer.write(output_pdf)
 
-    print(f"Assinatura adicionada com sucesso ao arquivo '{pdf_path}'.")
+    st.success(f"Assinatura adicionada com sucesso ao arquivo '{pdf_path}'.")
 
 def main():
-    month = int(input("Digite o mês de referência (número de 1 a 12): "))
-    year = int(input("Digite o ano de referência (número inteiro, por exemplo, 1 para 'Ano 1'): "))
+    st.title("Diário de Obras - Processamento de PDFs")
+    st.write("Informe as informações necessárias para o processamento:")
 
-    output_directory = os.path.join("media", "relatorio")
-    os.makedirs(output_directory, exist_ok=True)
+    month = st.number_input("Mês de referência (1 a 12):", min_value=1, max_value=12, value=1, step=1)
+    year = st.number_input("Ano de referência:", min_value=1, value=1, step=1)
 
-    final_filename = f"Documentos_{month}_Ano_{year}_assinatura.pdf"
-    final_pdf_path = os.path.join(output_directory, final_filename)
-
-    if os.path.exists(final_pdf_path):
-        print(f"O arquivo '{final_pdf_path}' já existe. Nenhuma ação foi realizada.")
-        return
-
-    pdf_files = get_pdf_files(month, year)
-
-    if not pdf_files:
-        print("Nenhum arquivo PDF encontrado para o mês e ano informados.")
-        return
-
-    # Caminho da imagem
-    image_path = os.path.join("media", "template", "assinatura.png")
-
-    # Verifica se a imagem existe
-    if not os.path.exists(image_path):
-        print(f"A imagem '{image_path}' não foi encontrada.")
-        return
-
-    # Junta os PDFs
-    merge_pdfs(pdf_files, final_pdf_path)
-
-    # Adiciona a imagem em cada página do PDF combinado
-    add_image_to_pdf(final_pdf_path, image_path)
-
-    print(f"Processo concluído! O arquivo final com a assinatura está em '{final_pdf_path}'.")
+    if st.button("Buscar PDFs"):
+        pdf_files = get_pdf_files(month, year)
+        if not pdf_files:
+            st.error("Nenhum arquivo PDF encontrado para o mês e ano informados.")
+            return
+        
+        st.write("Arquivos PDF encontrados:")
+        for file in pdf_files:
+            st.write(f"- {file}")
+        
+        if st.button("Confirmar Processamento"):
+            output_directory = os.path.join("media", "relatorio")
+            os.makedirs(output_directory, exist_ok=True)
+            
+            final_filename = f"Documentos_{month}_Ano_{year}_assinatura.pdf"
+            final_pdf_path = os.path.join(output_directory, final_filename)
+            
+            if os.path.exists(final_pdf_path):
+                st.warning(f"O arquivo '{final_pdf_path}' já existe. Nenhuma ação foi realizada.")
+                return
+            
+            image_path = os.path.join("media", "template", "assinatura.png")
+            if not os.path.exists(image_path):
+                st.error(f"A imagem '{image_path}' não foi encontrada.")
+                return
+            
+            merge_pdfs(pdf_files, final_pdf_path)
+            add_image_to_pdf(final_pdf_path, image_path)
+            st.success(f"Processo concluído! O arquivo final com a assinatura está em '{final_pdf_path}'.")
 
 if __name__ == "__main__":
     main()
