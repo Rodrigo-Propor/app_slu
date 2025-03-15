@@ -9,3 +9,11 @@ PARA O DIÁRIO DE OBRA, COLOCA OS ARQUIVOS DO DIÁRIO NA PASTRA media/diario e e
 
 NÃO ENCHE MAIS O MEU SACO.
 
+
+
+ABOBADO!
+
+PARA GERAR O ARQUIVO DO WORD TU TGEM QUE ATUALIZAR O ARQUIVO DO BANCO DE DADOS QUE ESTÁ NA PASTA banco_dados_completo (só se tu for muito retardado para não entender isso).
+O código pega as informações daquele arquivo. Se não der certo, eu quero mais é que tu te foda!
+
+
