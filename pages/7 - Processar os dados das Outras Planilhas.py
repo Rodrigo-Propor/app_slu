@@ -138,22 +138,25 @@ def definir_arquivo_e_planilha(tipo, placa):
     
     return (None, None)
 
-def encontrar_ultima_linha_valida(ws):
-    """
-    Encontra a última linha válida na coluna A.
-    """
+def encontrar_ultima_linha_valida_banco(conn, nome_arquivo, nome_planilha, ws):
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT ultima_linha_valida
+        FROM verificacao_planilhas
+        WHERE nome_arquivo = ? AND nome_planilha = ?
+        ORDER BY data_processamento DESC
+        LIMIT 1
+    """, (nome_arquivo, nome_planilha))
+    row = cursor.fetchone()
+    if row:
+        return row[0]
     ultima_linha = ws.max_row
     while ultima_linha > 0 and ws.cell(ultima_linha, 1).value is None:
         ultima_linha -= 1
     return ultima_linha
 
-def inserir_registro_padrao(ws, data_reg, coord_este, coord_norte, elevacao):
-    """
-    Insere uma linha em planilhas do tipo "Placa de Recalque AC XX", "Recalques Celula Pesquisa.xlsx", etc.
-    Padrão colunas:
-     A=Data, B=Cota/Elevação, C=Coord Este, D=Coord Norte.
-    """
-    ultima_linha_valida = encontrar_ultima_linha_valida(ws)
+def inserir_registro_padrao(ws, conn, arquivo, planilha, data_reg, coord_este, coord_norte, elevacao):
+    ultima_linha_valida = encontrar_ultima_linha_valida_banco(conn, arquivo, planilha, ws)
     new_row = ultima_linha_valida + 1
     # Data
     if not isinstance(ws.cell(new_row, 1), MergedCell):
@@ -296,6 +299,9 @@ def main():
                 for reg in regs_ordenados:
                     inserir_registro_padrao(
                         ws,
+                        conn,
+                        arquivo_excel,
+                        planilha_excel,
                         reg["data_dt"],
                         reg["coord_este"],
                         reg["coord_norte"],

@@ -74,6 +74,32 @@ def main():
         if not conn:
             return
         
+        # Novo trecho: buscar última linha válida para cada planilha
+        try:
+            cur2 = conn.cursor()
+            sql_validas = """
+                SELECT nome_planilha, ultima_linha_valida 
+                FROM verificacao_planilhas
+                WHERE nome_arquivo = ?
+                AND nome_planilha IN ('Coordenada NORTE', 'Coordenada ESTE', 'Cota')
+                ORDER BY data_processamento DESC
+            """
+            cur2.execute(sql_validas, (NOME_ARQUIVO,))
+            linhas_validas = {}
+            for registro in cur2.fetchall():
+                planilha = registro[0]
+                if planilha not in linhas_validas:  # pega somente registro mais recente
+                    linhas_validas[planilha] = registro[1]
+        except Exception as e:
+            st.error("Erro ao ler linha válida:", icon="🚫")
+            st.exception(e)
+            conn.close()
+            return
+        
+        base_norte = linhas_validas.get("Coordenada NORTE", 0) + 1
+        base_este  = linhas_validas.get("Coordenada ESTE", 0) + 1
+        base_cota  = linhas_validas.get("Cota", 0) + 1
+        
         # 3. Ler registros de INCLINÔMETRO
         try:
             cur = conn.cursor()
@@ -166,8 +192,11 @@ def main():
             # Calcula dias
             dias = calcular_dias(data_dt)
             
-            # Cria nova linha na planilha NORTE
-            row_norte = ws_norte.max_row + 1
+            # Substituir uso de max_row pelo valor da última linha obtida
+            row_norte = base_norte
+            row_este  = base_este
+            row_cota  = base_cota
+            
             ws_norte.cell(row_norte, 1).value = data_dt
             ajustar_formatacao_celula(ws_norte.cell(row_norte, 1), eh_data=True)
             
@@ -175,7 +204,6 @@ def main():
             ajustar_formatacao_celula(ws_norte.cell(row_norte, 2), eh_data=False)
             
             # Cria nova linha na planilha ESTE
-            row_este = ws_este.max_row + 1
             ws_este.cell(row_este, 1).value = data_dt
             ajustar_formatacao_celula(ws_este.cell(row_este, 1), eh_data=True)
             
@@ -183,7 +211,6 @@ def main():
             ajustar_formatacao_celula(ws_este.cell(row_este, 2), eh_data=False)
             
             # Cria nova linha na planilha COTA
-            row_cota = ws_cota.max_row + 1
             ws_cota.cell(row_cota, 1).value = data_dt
             ajustar_formatacao_celula(ws_cota.cell(row_cota, 1), eh_data=True)
             
@@ -211,6 +238,10 @@ def main():
                     # COTA => grava 'elev_val'
                     ws_cota.cell(row_cota, col).value = elev_val
                     ajustar_formatacao_celula(ws_cota.cell(row_cota, col), eh_data=False)
+            
+            base_norte += 1
+            base_este  += 1
+            base_cota  += 1
             
             progresso.progress(int((contador / total_datas)*100),
                                text=f"Inserindo data {contador}/{total_datas}")
