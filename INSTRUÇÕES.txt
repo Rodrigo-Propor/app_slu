@@ -1,5 +1,8 @@
 SEU ABOBADO MENTAL
 
+
+Esse teu sistema é uma merda. Tu tem que apagar todos os registros dos meses anterios do bd que ficam for da pasta. E fazer só o processamento do mês.
+
 coloca os arquvios oficiais da slu na pasta media/planilha_slu
 coloca os arquivos .txt no originais_txt
 segue a seguencia de números

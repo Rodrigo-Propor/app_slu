@@ -262,6 +262,17 @@ def set_repeat_table_header(row):
     trPr.append(tblHeader)
     return row
 
+# Adicionar esta função para sanitizar nomes de arquivos
+def sanitize_filename(filename):
+    """Remove caracteres inválidos para nomes de arquivos no Windows."""
+    import re
+    # Substitui caracteres inválidos por underscore
+    sanitized = re.sub(r'[<>:"/\\|?*]', '_', filename)
+    # Remove acentos
+    import unicodedata
+    sanitized = unicodedata.normalize('NFKD', sanitized).encode('ASCII', 'ignore').decode('ASCII')
+    return sanitized
+
 # ----------------------------------------------------------------
 # Layout do Streamlit
 
@@ -312,7 +323,14 @@ if st.button("Gerar Relatório"):
 
         # Nome do arquivo de saída (substitui se já existir)
         hoje = datetime.now().strftime("%d_%m_%y")
-        nome_arquivo = f"tabelas_relatório_{hoje}.docx"
+        nome_arquivo = f"tabelas_relatorio_{hoje}.docx"  # Removido acento
+        nome_arquivo = sanitize_filename(nome_arquivo)
+
+        # Verifica se diretório existe e cria se necessário
+        if not os.path.exists(DIRETORIO_ARQUIVOS):
+            os.makedirs(DIRETORIO_ARQUIVOS)
+            st.info(f"Diretório para arquivos Word criado: {DIRETORIO_ARQUIVOS}")
+
         caminho_completo = os.path.join(DIRETORIO_ARQUIVOS, nome_arquivo)
 
         # Inicia a contagem para a barra de progresso
@@ -413,7 +431,25 @@ if st.button("Gerar Relatório"):
             progress_bar.progress(progresso, text=f"Gerando tabela {cont}/{total_tabelas}...")
 
         # 9) Salvar o arquivo (substituir se já existe)
-        doc.save(caminho_completo)
+        try:
+            # Primeira tentativa - nome original
+            doc.save(caminho_completo)
+        except PermissionError:
+            # Se o arquivo estiver em uso, tenta com timestamp adicional
+            st.warning("Arquivo original está em uso. Tentando nome alternativo...", icon="⚠️")
+            timestamp = datetime.now().strftime("%H%M%S")
+            nome_alternativo = f"tabelas_relatorio_{hoje}_{timestamp}.docx"
+            nome_alternativo = sanitize_filename(nome_alternativo)
+            caminho_alternativo = os.path.join(DIRETORIO_ARQUIVOS, nome_alternativo)
+            
+            try:
+                doc.save(caminho_alternativo)
+                caminho_completo = caminho_alternativo  # Atualiza caminho para a mensagem final
+                st.info(f"Arquivo salvo com nome alternativo: {nome_alternativo}")
+            except Exception as e:
+                st.error(f"Não foi possível salvar o arquivo mesmo com nome alternativo: {str(e)}", icon="❌")
+                st.info("Sugestão: Verifique se você tem permissões de escrita na pasta ou se o arquivo está em uso.")
+                raise
 
         # Mensagem de finalização
         st.success(f"Arquivo gerado com sucesso: {caminho_completo}", icon="✅")
