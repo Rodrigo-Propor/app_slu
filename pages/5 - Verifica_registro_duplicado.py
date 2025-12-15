@@ -13,8 +13,8 @@ import pandas as pd
 # locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')  # ou "pt_BR" dependendo do sistema
 
 # DIRETÓRIOS e ARQUIVOS
-DIRETORIO_ARQUIVOS = r"D:\OneDrive\Documentos\APP\app_slu\media\planilhas_SLU"
-BANCO_DADOS = r"D:\OneDrive\Documentos\APP\app_slu\banco_dados.db"
+DIRETORIO_ARQUIVOS = "media/planilhas_SLU"
+BANCO_DADOS = "banco_dados.db"
 
 # Lista de arquivos e planilhas associadas:
 # Aqui você pode mapear o 'id' à tupla (nome_arquivo, nome_planilha)
@@ -182,7 +182,9 @@ def criar_tabela_if_not_exists():
     """
     Cria a tabela de resultados no banco de dados se ela ainda não existir.
     """
-    conexao = sqlite3.connect(BANCO_DADOS)
+    # Obter o caminho absoluto do banco de dados
+    banco_absoluto = os.path.abspath(BANCO_DADOS)
+    conexao = sqlite3.connect(banco_absoluto)
     c = conexao.cursor()
     c.execute(f"""
         CREATE TABLE IF NOT EXISTS {TABELA_RESULTADOS} (
@@ -467,7 +469,9 @@ def inserir_registro_no_banco(nome_arquivo, nome_planilha, ultima_linha, data_re
     """
     Insere no banco de dados sqlite o registro de última linha e data.
     """
-    conexao = sqlite3.connect(BANCO_DADOS)
+    # Obter o caminho absoluto do banco de dados
+    banco_absoluto = os.path.abspath(BANCO_DADOS)
+    conexao = sqlite3.connect(banco_absoluto)
     c = conexao.cursor()
     c.execute(f"""
         INSERT INTO {TABELA_RESULTADOS} 

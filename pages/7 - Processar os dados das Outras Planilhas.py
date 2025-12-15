@@ -163,24 +163,29 @@ def encontrar_ultima_linha_valida_banco(conn, nome_arquivo, nome_planilha, ws):
     return ultima_linha
 
 def inserir_registro_padrao(ws, conn, arquivo, planilha, data_reg, coord_este, coord_norte, elevacao):
-    ultima_linha_valida = encontrar_ultima_linha_valida_banco(conn, arquivo, planilha, ws)
+    """
+    Insere um novo registro no Excel na próxima linha disponível.
+    """
+    # Determinar a última linha preenchida na planilha
+    ultima_linha_valida = ws.max_row
+    while ultima_linha_valida > 0 and ws.cell(ultima_linha_valida, 1).value is None:
+        ultima_linha_valida -= 1
+
+    # Próxima linha disponível
     new_row = ultima_linha_valida + 1
-    # Data
-    if not isinstance(ws.cell(new_row, 1), MergedCell):
-        ws.cell(new_row, 1).value = data_reg
-        ajustar_formatacao_celula(ws.cell(new_row, 1), eh_data=True)
-    # Elevação
-    if not isinstance(ws.cell(new_row, 2), MergedCell):
-        ws.cell(new_row, 2).value = elevacao
-        ajustar_formatacao_celula(ws.cell(new_row, 2), eh_data=False)
-    # Coord Este
-    if not isinstance(ws.cell(new_row, 3), MergedCell):
-        ws.cell(new_row, 3).value = coord_este
-        ajustar_formatacao_celula(ws.cell(new_row, 3), eh_data=False)
-    # Coord Norte
-    if not isinstance(ws.cell(new_row, 4), MergedCell):
-        ws.cell(new_row, 4).value = coord_norte
-        ajustar_formatacao_celula(ws.cell(new_row, 4), eh_data=False)
+
+    # Inserir os dados na nova linha
+    ws.cell(new_row, 1).value = data_reg
+    ajustar_formatacao_celula(ws.cell(new_row, 1), eh_data=True)
+
+    ws.cell(new_row, 2).value = elevacao
+    ajustar_formatacao_celula(ws.cell(new_row, 2), eh_data=False)
+
+    ws.cell(new_row, 3).value = coord_este
+    ajustar_formatacao_celula(ws.cell(new_row, 3), eh_data=False)
+
+    ws.cell(new_row, 4).value = coord_norte
+    ajustar_formatacao_celula(ws.cell(new_row, 4), eh_data=False)
 
 def sanitize_filename(filename):
     return re.sub(r'[<>:"/\\|?*]', '_', filename)
@@ -254,8 +259,8 @@ def main():
     st.title("Exportação de Dados para Excel")
     
     # Ajuste conforme o seu cenário
-    CAMINHO_BANCO = r"D:\OneDrive\Documentos\APP\app_slu\banco_dados.db"
-    DIRETORIO_EXCEL = r"D:\OneDrive\Documentos\APP\app_slu\media\planilhas_SLU"
+    CAMINHO_BANCO = "banco_dados.db"
+    DIRETORIO_EXCEL = "media/planilhas_SLU"
     
     # Adicionar botão para iniciar o processamento
     if st.button("Iniciar Processamento"):

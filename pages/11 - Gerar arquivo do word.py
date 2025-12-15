@@ -15,10 +15,10 @@ from docx.oxml.ns import nsdecls, qn
 
 # ----------------------------------------------------------------
 # Ajuste este caminho conforme seu diretório de arquivos Word:
-DIRETORIO_ARQUIVOS = r"D:\OneDrive\Documentos\APP\app_slu\media\word"
+DIRETORIO_ARQUIVOS = "media/word"
 
 # Ajuste o caminho para seu banco de dados:
-CAMINHO_BD = r"D:\OneDrive\Documentos\APP\app_slu\banco_dados_completo\banco_dados.db"
+CAMINHO_BD = "banco_dados_completo/banco_dados.db"
 TABELA_BD = "placas_completas_slu_bh"
 
 # Dicionário que mapeia cada placa ao nome da Tabela que ela pertence

@@ -65,8 +65,8 @@ def main():
     
     if st.button("Iniciar Processamento"):
         # 1. Caminhos
-        CAMINHO_BANCO = r"D:\OneDrive\Documentos\APP\app_slu\banco_dados.db"
-        DIRETORIO_EXCEL = r"D:\OneDrive\Documentos\APP\app_slu\media\planilhas_SLU"
+        CAMINHO_BANCO = "banco_dados.db"
+        DIRETORIO_EXCEL = "media/planilhas_SLU"
         NOME_ARQUIVO = "Inclinômetro.xlsx"
         
         # 2. Conexão ao banco
