@@ -56,7 +56,6 @@ tmp/
 temporario/
 lixo/
 old/
-topo/
 
 # Media and data files
 media/
@@ -102,3 +101,20 @@ htmlcov/
 
 # Jupyter
 .ipynb_checkpoints
+
+# Topo folder - ignore data but allow scripts
+topo/perfil/
+topo/conversoes_final/
+topo/.venv/
+topo/.venv311/
+topo/.trae/
+topo/banco_dados_completo/
+topo/dash/
+topo/env/
+topo/images/
+topo/media/
+topo/originais_txt/
+topo/relatorios/
+topo/statics/
+topo/txt/
+topo/__pycache__/
