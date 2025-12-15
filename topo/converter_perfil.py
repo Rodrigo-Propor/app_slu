@@ -97,6 +97,9 @@ def parse_gd2i_file(content, known_points, calib_theta=None):
             current_hi = 0.0
             azimuth_correction = 0.0
     
+    # Extract number counter for points
+    ponto_counter = 1
+    
     for pt_match in re.finditer(regex_point, content):
         if current_stn not in known_points:
             continue
@@ -131,12 +134,27 @@ def parse_gd2i_file(content, known_points, calib_theta=None):
         ef = e0 + horiz_dist * math.sin(az_rad)
         zf = z0 + current_hi + diff_level - ht
         
+        # Extract numeric part from pt_id if exists
+        numeric_match = re.match(r'(\d+)', str(pt_id))
+        if numeric_match:
+            ponto_num = int(numeric_match.group(1))
+        else:
+            ponto_num = ponto_counter
+            ponto_counter += 1
+        
+        # Combine any non-numeric part with code
+        non_numeric = str(pt_id)[len(numeric_match.group(1)) if numeric_match else 0:].strip()
+        if non_numeric:
+            descricao = f"{code}_{non_numeric}"
+        else:
+            descricao = code
+        
         points_calculated.append({
-            'Ponto': pt_id,
-            'Descricao': code,
+            'Ponto': ponto_num,
             'Este': round(ef, 4),
             'Norte': round(nf, 4),
-            'Cota': round(zf, 4),
+            'Elevacao': round(zf, 4),
+            'Descricao': descricao,
         })
 
     return pd.DataFrame(points_calculated)
@@ -180,13 +198,16 @@ def converter_arquivos_perfil():
         destino_txt = saida / (arquivo.stem + ".txt")
         try:
             with destino_txt.open("w", encoding="utf-8") as f:
+                # Write header
+                f.write("Ponto,Este,Norte,Elevacao,Descricao\n")
+                # Write data
                 for _, row in df.iterrows():
-                    ponto = str(row['Ponto']).strip()
-                    descricao = str(row['Descricao']).strip()
+                    ponto = int(row['Ponto'])
                     este = float(row['Este'])
                     norte = float(row['Norte'])
-                    cota = float(row['Cota'])
-                    f.write(f"{ponto},{descricao},{este:.4f},{norte:.4f},{cota:.4f}\n")
+                    elevacao = float(row['Elevacao'])
+                    descricao = str(row['Descricao']).strip()
+                    f.write(f"{ponto},{este:.4f},{norte:.4f},{elevacao:.4f},{descricao}\n")
             
             print(f"  SUCCESS: {destino_txt.name}")
             print(f"  Extracted: {len(df)} points")
