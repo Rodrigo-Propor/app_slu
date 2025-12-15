@@ -1,24 +1,67 @@
 venv/
-media/
-temporario/
-*.pyc
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+pip-log.txt
+
+# Virtual environments
+.venv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*~
+
+# Visual Studio
+.vs/
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.slnx
+
+# Logs and databases
 *.log
 *.db
 *.sqlite3
-*.swp
-*.swo
-*.swn
-*.swn
-*.swo
-*.swp
-*.swn
+*.sqlite
 log/
-images/
+
+# Temporary files
+temp/
+tmp/
+temporario/
+lixo/
 old/
+
+# Media and data files
+media/
+images/
 *.pyc
-*.log
-*.db
-*.sqlite3
+
+# Office files
 *.docx
 *.pdf
 *.xls
@@ -30,8 +73,30 @@ old/
 *.odp
 *.odg
 *.odf
-*.db
-lixo/
-old/
-temp/
-temporario/
+
+# Streamlit
+.streamlit/
+secrets.toml
+
+# Environment files
+.env
+.env.local
+.env.*.local
+credentials.json
+token.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Uploads/Downloads
+uploads/
+downloads/
+
+# Coverage and testing
+.coverage
+.pytest_cache/
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints
